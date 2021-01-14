@@ -3,3 +3,10 @@
 ################################################################################
 
 /.vs
+/Demo/obj
+/Demo/bin/Debug/net5.0
+/Demo/.vscode
+/Demo/.vs/Demo
+/PreStormCore/obj
+/PreStormCore/bin
+/PreStormCore/.vs/PreStormCore
