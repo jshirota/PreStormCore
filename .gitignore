@@ -3,3 +3,15 @@
 ################################################################################
 
 /System.Security.Permissions.dll
+/PreStormCore.sln
+/Newtonsoft.Json.dll
+/Demo.sln
+/Clean.exe
+/PreStormCore.UnitTests
+/PreStormCore/obj
+/Demo/.vs/Demo/DesignTimeBuild
+/.vscode
+/.vs
+/PreStormCore.Tools/obj
+/PreStormCore.Tools/bin/Debug
+/PreStormCore/bin/Debug
