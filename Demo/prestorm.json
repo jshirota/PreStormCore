@@ -1,7 +1,7 @@
 ﻿{
   "services": [
     {
-      "url": "https://sampleserver6.arcgisonline.com/arcgis/rest/services/USA/MapServer",
+      "url": "https://sampleserver6.arcgisonline.com/arcgis/rest/services/SpatioTemporalAggregation/SFCrimes/MapServer",
       "token": "",
       "user": "",
       "password": "",
