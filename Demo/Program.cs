@@ -1,8 +1,8 @@
 using System;
 
-var service = new Sfcrimes.Service();
+var service = new Usa.Service();
 
-foreach (var state in service.CrimeLocations.Download())
+foreach (var state in service.States.Download())
 {
-    Console.WriteLine(state);
+    Console.WriteLine(state.StateName);
 }
