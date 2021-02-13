@@ -9,6 +9,13 @@
     },
     {
       "url": "https://sampleserver6.arcgisonline.com/arcgis/rest/services/USA/MapServer"
+    },
+    {
+      "url": "https://earthquake.usgs.gov/arcgis/rest/services/eq/EQ_Catalog/MapServer"
+    },
+    {
+      "url": "https://sampleserver6.arcgisonline.com/arcgis/rest/services/Wildfire/FeatureServer",
+      "domain": "name"
     }
   ]
 }
