@@ -2,4 +2,13 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/Demo/.vs/Demo/v16
+/.vs
+/Demo/.vs
+/Demo/bin
+/Demo/obj
+/PreStormCore/.vs
+/PreStormCore/bin
+/PreStormCore/obj
+/PreStormCore.Tools/.vs
+/PreStormCore.Tools/bin
+/PreStormCore.Tools/obj
