@@ -7,4 +7,4 @@
 - Optional domain to enum mapping
 - Tooling support via Source Generator
 
-![Demo](Demo/demo1.png)
+![Demo](demo1.png)
