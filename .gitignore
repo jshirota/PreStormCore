@@ -1,0 +1,15 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/Demo/.vs
+/Demo/bin
+/Demo/obj
+/PreStormCore/.vs
+/PreStormCore/bin
+/PreStormCore/obj
+/PreStormCore.Tools/.vs
+/PreStormCore.Tools/bin
+/PreStormCore.Tools/obj
+/PreStormCore.UnitTests
