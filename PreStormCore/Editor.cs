@@ -15,6 +15,13 @@ namespace PreStormCore
         public static async Task<EditResult<T>> DeleteAsync<T>(this IDelete<T> layer, params T[] features) where T : Feature
             => await ApplyEdits(layer, featuresToDelete: features);
 
+        public static async Task<EditResult<T>> DeleteAsync<T>(this IDelete<T> layer, string whereClause) where T : Feature
+        {
+            var editResultSet = await Esri.Delete(layer.Url, layer.Token, whereClause);
+
+            return new EditResult<T>(editResultSet, layer);
+        }
+
         public static async Task<EditResult<T>> ApplyEditsAsync<T>(this IFeatureLayer<T> layer, T[]? featuresToAdd = null, T[]? featuresToUpdate = null, T[]? featuresToDelete = null) where T : Feature
             => await ApplyEditsAsync(layer, featuresToAdd, featuresToUpdate, featuresToDelete);
 

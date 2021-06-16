@@ -26,7 +26,7 @@ namespace PreStormCore
                 if (response.error?.message is not null)
                     throw new InvalidOperationException(response.error?.message);
 
-                if (response is EditResultSet resultSet && new[] { resultSet.addResults, resultSet.updateResults, resultSet.deleteResults }.Any(results => results is null || results.Any(r => !r.success)))
+                if (response is EditResultSet resultSet && new[] { resultSet.addResults, resultSet.updateResults, resultSet.deleteResults }.Any(results => results?.Any(r => !r.success) == true))
                     throw new InvalidOperationException("ArcGIS Server returned an error response.");
 
                 return response;
@@ -87,6 +87,12 @@ namespace PreStormCore
 
             var data = string.Join("&", ops.Select(x => $"{x.op}={WebUtility.UrlEncode(x.data!.Serialize())}"));
             return await GetResponse<EditResultSet>($"{url}/applyEdits", data, token);
+        }
+
+        public static async Task<EditResultSet> Delete(string url, string? token, string whereClause)
+        {
+            var data = $"where={WebUtility.UrlEncode(whereClause)}";
+            return await GetResponse<EditResultSet>($"{url}/deleteFeatures", data, token);
         }
 
         private static object? RemoveNullZ(object? obj)
