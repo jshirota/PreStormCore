@@ -74,12 +74,8 @@ namespace PreStormCore
             return Regex.IsMatch(url, @"\.arcgis\.com/", RegexOptions.IgnoreCase);
         }
 
-        public static async Task<TokenInfo> GetTokenInfo(string url, string username, string password, int expiration)
+        public static async Task<TokenInfo> GetTokenInfo(string tokenUrl, string username, string password, int expiration)
         {
-            var tokenUrl = IsArcGISOnline(url)
-                ? "https://www.arcgis.com/sharing/generateToken"
-                : $"{Regex.Match(url, @"^http.*?(?=(/rest/services/))", RegexOptions.IgnoreCase).Value}/tokens/generateToken";
-
             var data = $"username={WebUtility.UrlEncode(username)}&password={WebUtility.UrlEncode(password)}&clientid=requestip&expiration={expiration}";
             return await GetResponse<TokenInfo>(tokenUrl, data);
         }

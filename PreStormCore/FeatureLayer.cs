@@ -28,6 +28,11 @@ namespace PreStormCore
         public string Url { get; }
         public LayerInfo LayerInfo { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Layer{T}"/> class.
+        /// </summary>
+        /// <param name="url">Layer url (ends with the layer id).</param>
+        /// <param name="token">Token.</param>
         public Layer(string url, string? token = null)
         {
             this.token = token is null ? null : new Token(token);
@@ -35,9 +40,16 @@ namespace PreStormCore
             LayerInfo = Esri.GetLayer(url, Token).Result;
         }
 
-        public Layer(string url, string userName, string password)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Layer{T}"/> class.
+        /// </summary>
+        /// <param name="url">Layer url (ends with the layer id).</param>
+        /// <param name="userName">User name.</param>
+        /// <param name="password">Password.</param>
+        /// <param name="tokenUrl">Generate token url (defaults to ArcGIS Online).</param>
+        public Layer(string url, string userName, string password, string tokenUrl = "https://www.arcgis.com/sharing/rest/generateToken")
         {
-            this.token = new Token(url, userName, password);
+            this.token = new Token(tokenUrl, userName, password);
             Url = url;
             LayerInfo = Esri.GetLayer(url, Token).Result;
         }
@@ -156,11 +168,23 @@ namespace PreStormCore
 
     public class FeatureLayer<T> : Layer<T>, IFeatureLayer<T> where T : Feature
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FeatureLayer{T}"/> class.
+        /// </summary>
+        /// <param name="url">Layer url (ends with the layer id).</param>
+        /// <param name="token">Token.</param>
         public FeatureLayer(string url, string? token = null) : base(url, token)
         {
         }
 
-        public FeatureLayer(string url, string userName, string password) : base(url, userName, password)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FeatureLayer{T}"/> class.
+        /// </summary>
+        /// <param name="url">Layer url (ends with the layer id).</param>
+        /// <param name="userName">User name.</param>
+        /// <param name="password">Password.</param>
+        /// <param name="tokenUrl">Generate token url (defaults to ArcGIS Online).</param>
+        public FeatureLayer(string url, string userName, string password, string tokenUrl = "https://www.arcgis.com/sharing/rest/generateToken") : base(url, userName, password, tokenUrl)
         {
         }
     }

@@ -27,14 +27,14 @@ namespace PreStormCore
             this.generateToken = generateToken;
         }
 
-        public Token(string url, string userName, string password)
-            : this(() => GenerateToken(url, userName, password).Result)
+        public Token(string tokenUrl, string userName, string password)
+            : this(() => GenerateToken(tokenUrl, userName, password).Result)
         {
         }
 
-        public static async Task<Token> GenerateToken(string url, string userName, string password, int expiration = 60)
+        public static async Task<Token> GenerateToken(string tokenUrl, string userName, string password, int expiration = 60)
         {
-            var token = await Esri.GetTokenInfo(url, userName, password, expiration);
+            var token = await Esri.GetTokenInfo(tokenUrl, userName, password, expiration);
             return new Token(token.token, Esri.BaseTime.AddMilliseconds(token.expires));
         }
 
