@@ -13,3 +13,7 @@
 /PreStormCore.Tools/bin
 /PreStormCore.Tools/obj
 /PreStormCore.UnitTests
+/System.Security.Permissions.dll
+/PreStormCore.sln
+/Newtonsoft.Json.dll
+/Clean.exe
