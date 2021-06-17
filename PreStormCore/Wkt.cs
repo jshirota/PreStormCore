@@ -37,8 +37,8 @@ namespace PreStormCore
             if (Regex.IsMatch(wkt, $@"^\s*{type}\s+EMPTY\s*$", RegexOptions.IgnoreCase))
                 return null;
 
-            return Regex.Replace(Regex.Replace(wkt, @"(?<x>\-?\d+(\.\d+)?)\s+(?<y>\-?\d+(\.\d+)?)",
-                m => $"[{m.Groups["x"]},{m.Groups["y"]}]"), type, "", RegexOptions.IgnoreCase)
+            return Regex.Replace(Regex.Replace(wkt, @"(?<x>\-?\d+(\.\d+)?)\s+(?<y>\-?\d+(\.\d+)?)(\s+\-?\d+(\.\d+)?)?",
+                m => $"[{m.Groups["x"]},{m.Groups["y"]}]"), $@"{type}\s?Z?", "", RegexOptions.IgnoreCase)
                 .Replace("(", "[")
                 .Replace(")", "]");
         }
@@ -67,7 +67,10 @@ namespace PreStormCore
 
         internal static void LoadWkt(this Polygon polygon, string wkt)
         {
-            polygon.rings = wkt.ToJson("MULTIPOLYGON")?.Deserialize<double[][][][]>()?.SelectMany(p => p).ToArray() ?? Array.Empty<double[][]>();
+            if (wkt.StartsWith("POLYGON"))
+                polygon.rings = wkt.ToJson("POLYGON")?.Deserialize<double[][][]>()?.Select(x => x.Reverse().ToArray()).ToArray() ?? Array.Empty<double[][]>();
+            else
+                polygon.rings = wkt.ToJson("MULTIPOLYGON")?.Deserialize<double[][][][]>()?.SelectMany(p => p.Reverse().ToArray()).ToArray() ?? Array.Empty<double[][]>();
         }
 
         public static string ToWkt(this Geometry geometry)
@@ -100,7 +103,7 @@ namespace PreStormCore
             if (s.StartsWith("MULTILINESTRING"))
                 return Polyline.FromWkt(wkt);
 
-            if (s.StartsWith("MULTIPOLYGON"))
+            if (s.StartsWith("POLYGON") || s.StartsWith("MULTIPOLYGON"))
                 return Polygon.FromWkt(wkt);
 
             throw new ArgumentException("This geometry type is not supported.", nameof(wkt));
