@@ -179,7 +179,8 @@ namespace PreStormCore.Tools
                     esriFieldTypeSingle => "float",
                     esriFieldTypeString => "string",
                     esriFieldTypeDate => "System.DateTime",
-                    esriFieldTypeGUID | esriFieldTypeGlobalID => "System.Guid",
+                    esriFieldTypeGUID => "System.Guid",
+                    esriFieldTypeGlobalID => "System.Guid",
                     _ => null
                 };
 
