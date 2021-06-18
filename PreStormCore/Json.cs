@@ -14,9 +14,9 @@ namespace PreStormCore
             options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
         }
 
-        internal static T? Deserialize<T>(this string json)
+        internal static T Deserialize<T>(this string json)
         {
-            return JsonSerializer.Deserialize<T>(json, options);
+            return JsonSerializer.Deserialize<T>(json, options)!;
         }
 
         internal static string Serialize(this object obj)
@@ -24,16 +24,13 @@ namespace PreStormCore
             return JsonSerializer.Serialize(obj, options);
         }
 
-        public static string? ToJson(this GeometryBase geometry)
+        public static string ToJson(this GeometryBase geometry)
         {
-            return geometry?.Serialize();
+            return geometry.Serialize();
         }
 
         public static Geometry? ToGeometry(string json)
         {
-            if (json is null)
-                return null;
-
             if (json.Contains("x") && json.Contains("y"))
                 return Point.FromJson(json);
 

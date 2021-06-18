@@ -50,15 +50,18 @@ namespace PreStormCore
             this.spatialReference = spatialReference;
         }
 
-        public static Point? FromJson(string json)
+        public static Point? FromJson(string json, SpatialReference? spatialReference = null)
         {
-            return json?.Deserialize<Point>();
+            var point = json.Deserialize<Point>();
+            point.spatialReference = spatialReference;
+            return point;
         }
 
-        public static Point FromWkt(string wkt)
+        public static Point FromWkt(string wkt, SpatialReference? spatialReference = null)
         {
             var point = new Point();
             point.LoadWkt(wkt);
+            point.spatialReference = spatialReference;
             return point;
         }
 
@@ -118,15 +121,18 @@ namespace PreStormCore
                 .ToArray();
         }
 
-        public static Multipoint? FromJson(string json)
+        public static Multipoint? FromJson(string json, SpatialReference? spatialReference = null)
         {
-            return json?.Deserialize<Multipoint>();
+            var multipoint = json.Deserialize<Multipoint>();
+            multipoint.spatialReference = spatialReference;
+            return multipoint;
         }
 
-        public static Multipoint FromWkt(string wkt)
+        public static Multipoint FromWkt(string wkt, SpatialReference? spatialReference = null)
         {
             var multipoint = new Multipoint();
             multipoint.LoadWkt(wkt);
+            multipoint.spatialReference = spatialReference;
             return multipoint;
         }
 
@@ -161,15 +167,18 @@ namespace PreStormCore
             paths = new[] { path };
         }
 
-        public static Polyline? FromJson(string json)
+        public static Polyline? FromJson(string json, SpatialReference? spatialReference = null)
         {
-            return json?.Deserialize<Polyline>();
+            var polyline = json.Deserialize<Polyline>();
+            polyline.spatialReference = spatialReference;
+            return polyline;
         }
 
-        public static Polyline FromWkt(string wkt)
+        public static Polyline FromWkt(string wkt, SpatialReference? spatialReference = null)
         {
             var polyline = new Polyline();
             polyline.LoadWkt(wkt);
+            polyline.spatialReference = spatialReference;
             return polyline;
         }
 
@@ -204,15 +213,18 @@ namespace PreStormCore
             rings = new[] { ring };
         }
 
-        public static Polygon? FromJson(string json)
+        public static Polygon? FromJson(string json, SpatialReference? spatialReference = null)
         {
-            return json?.Deserialize<Polygon>();
+            var polygon = json.Deserialize<Polygon>();
+            polygon.spatialReference = spatialReference;
+            return polygon;
         }
 
-        public static Polygon FromWkt(string wkt)
+        public static Polygon FromWkt(string wkt, SpatialReference? spatialReference = null)
         {
             var polygon = new Polygon();
             polygon.LoadWkt(wkt);
+            polygon.spatialReference = spatialReference;
             return polygon;
         }
 
@@ -249,9 +261,11 @@ namespace PreStormCore
             this.ymax = ymax;
         }
 
-        public static Envelope? FromJson(string json)
+        public static Envelope? FromJson(string json, SpatialReference? spatialReference = null)
         {
-            return json?.Deserialize<Envelope>();
+            var envelope = json.Deserialize<Envelope>();
+            envelope.spatialReference = spatialReference;
+            return envelope;
         }
 
         public static implicit operator Envelope((double xmin, double ymin, double xmax, double ymax) envelope)
