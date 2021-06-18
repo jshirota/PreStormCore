@@ -28,7 +28,7 @@ namespace PreStormCore
         internal static string ToWkt(this Polygon polygon)
         {
             return polygon.rings?.Length > 0
-                ? $"MULTIPOLYGON({string.Join(",", polygon.GroupRings().Select(p => $"({string.Join(",", p.Select(r => $"({string.Join(",", r.Select(c => $"{c[0]} {c[1]}"))})"))})"))})"
+                ? $"MULTIPOLYGON({string.Join(",", polygon.GroupRings().Select(p => $"({string.Join(",", p.Select(r => $"({string.Join(",", r.Reverse().Select(c => $"{c[0]} {c[1]}"))})"))})"))})"
                 : "MULTIPOLYGON EMPTY";
         }
 
@@ -68,9 +68,9 @@ namespace PreStormCore
         internal static void LoadWkt(this Polygon polygon, string wkt)
         {
             if (wkt.StartsWith("POLYGON"))
-                polygon.rings = wkt.ToJson("POLYGON")?.Deserialize<double[][][]>()?.Select(x => x.Reverse().ToArray()).ToArray() ?? Array.Empty<double[][]>();
+                polygon.rings = wkt.ToJson("POLYGON")?.Deserialize<double[][][]>()?.Select(r => r.Reverse().ToArray()).ToArray() ?? Array.Empty<double[][]>();
             else
-                polygon.rings = wkt.ToJson("MULTIPOLYGON")?.Deserialize<double[][][][]>()?.SelectMany(p => p.Reverse().ToArray()).ToArray() ?? Array.Empty<double[][]>();
+                polygon.rings = wkt.ToJson("MULTIPOLYGON")?.Deserialize<double[][][][]>()?.SelectMany(p => p).Select(r => r.Reverse().ToArray()).ToArray() ?? Array.Empty<double[][]>();
         }
 
         public static string ToWkt(this Geometry geometry)

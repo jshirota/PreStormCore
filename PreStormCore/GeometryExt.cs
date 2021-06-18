@@ -8,6 +8,12 @@ namespace PreStormCore
     {
         #region Helpers
 
+        public static bool IsClockwise(this double[][] ring)
+        {
+            return Enumerable.Range(0, ring.Length - 1)
+                .Sum(i => ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]) > 0;
+        }
+
         private static bool Null(params object?[] geometries)
         {
             return geometries is not null && geometries.Any(g => g is null);
@@ -130,12 +136,6 @@ namespace PreStormCore
         private static bool Contains(this Polygon polygon, double[][] points)
         {
             return points.All(p => polygon.Contains(new Point(p[0], p[1])));
-        }
-
-        internal static bool IsClockwise(this double[][] ring)
-        {
-            return Enumerable.Range(0, ring.Length - 1)
-                .Sum(i => ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]) > 0;
         }
 
         internal static List<List<double[][]>> GroupRings(this Polygon polygon)

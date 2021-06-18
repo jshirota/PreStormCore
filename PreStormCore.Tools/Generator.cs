@@ -32,7 +32,7 @@ namespace PreStormCore.Tools
             if (string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(password))
             {
                 if (string.IsNullOrEmpty(tokenUrl))
-                    tokenUrl = "https://www.arcgis.com/sharing/generateToken";
+                    tokenUrl = "https://www.arcgis.com/sharing/rest/generateToken";
 
                 var data = $"username={WebUtility.UrlEncode(user)}&password={WebUtility.UrlEncode(password)}&clientid=requestip&expiration=60";
 
