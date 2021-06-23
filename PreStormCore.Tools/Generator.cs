@@ -118,13 +118,9 @@ namespace PreStormCore.Tools
     {{
         private readonly string defaultUrl = ""{url}"";
 {string.Join("\r\n", types.Select(x => $@"        public PreStormCore.{type}<{x.@class}> {x.property} {{ get; }}"))}
-        public Service() : this(null, null, null, null, null) {{ }}
-        public Service(string token) : this(null, null, null, token, null) {{ }}
-        public Service(string userName, string password, string tokenUrl = ""https://www.arcgis.com/sharing/rest/generateToken"") : this(null, userName, password, null, tokenUrl) {{ }}
-        public Service(string url, string? userName, string? password, string tokenUrl = ""https://www.arcgis.com/sharing/rest/generateToken"") : this(url, userName, password, null, tokenUrl) {{ }}
-        private Service(string? url, string? userName, string? password, string? token, string? tokenUrl)
+        public Service(string? url = null, string? userName = null, string? password = null, string? token = null, string? tokenUrl = ""https://www.arcgis.com/sharing/rest/generateToken"")
         {{
-            PreStormCore.{type}<T> Create<T>(int id) where T : PreStormCore.Feature => userName is null || password is null
+            PreStormCore.{type}<T> Create<T>(int id) where T : PreStormCore.Feature => string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password)
                 ? new PreStormCore.FeatureLayer<T>($""{{url ?? defaultUrl}}/{{id}}"", token)
                 : new PreStormCore.FeatureLayer<T>($""{{url ?? defaultUrl}}/{{id}}"", userName, password, tokenUrl!);
 {string.Join("\r\n", types.Select(x => $@"            {x.property} = Create<{x.@class}>({x.id});"))}
