@@ -166,7 +166,7 @@ namespace PreStormCore
     public record LayerInfo(int id, string name, string type, GeometryType? geometryType, Field[] fields, bool hasZ, int? maxRecordCount, Error? error) : IResponse;
     public record Field(string name, string? alias, FieldType? type, bool? nullable, bool? editable, int? length);
     public record Error(string? message);
-    public record Result(int objectId, bool success);
+    public record Result(int? objectId, bool success);
     public record EditResultSet(Result[] addResults, Result[] updateResults, Result[] deleteResults, Error? error) : IResponse;
 
     internal interface IResponse { Error? error { get; } }

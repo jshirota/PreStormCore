@@ -13,7 +13,8 @@ namespace PreStormCore
         internal EditResult(EditResultSet editResultSet, ILayer<T> featureLayer)
         {
             this.Raw = editResultSet;
-            this.insertedFeatures = new Lazy<T[]>(() => featureLayer.Download(editResultSet.addResults.Select(r => r.objectId).ToArray()).ToArray());
+            this.insertedFeatures = new Lazy<T[]>(()
+                => featureLayer.Download(editResultSet.addResults.Where(x => x.objectId.HasValue).Select(r => r.objectId!.Value).ToArray()).ToArray());
         }
     }
 }
