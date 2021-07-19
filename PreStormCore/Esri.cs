@@ -23,17 +23,27 @@ namespace PreStormCore
                     ? await Http.Get<T>(url + "?" + queryString)
                     : await Http.Post<T>(url, data + "&" + queryString);
 
-                if (response.error?.message is not null)
-                    throw new InvalidOperationException(response.error?.message);
+                if (response.error is not null)
+                    throw new InvalidOperationException(JsonSerializer.Serialize(response.error));
 
-                if (response is EditResultSet resultSet && new[] { resultSet.addResults, resultSet.updateResults, resultSet.deleteResults }.Any(results => results?.Any(r => !r.success) == true))
-                    throw new InvalidOperationException("ArcGIS Server returned an error response.");
+                if (response is EditResultSet resultSet)
+                {
+                    var errors = new[] { resultSet.addResults, resultSet.updateResults, resultSet.deleteResults }
+                        .Where(x => x is not null)
+                        .SelectMany(x => x)
+                        .Where(x => !x.success)
+                        .Select(x => x.error)
+                        .ToArray();
+
+                    if (errors.Any())
+                        throw new InvalidOperationException(JsonSerializer.Serialize(errors));
+                }
 
                 return response;
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException($"An error occurred while processing a request against '{url}'.", ex);
+                throw new InvalidOperationException($"An error occurred while processing a request against '{url}'.  {ex.Message}");
             }
         }
 
@@ -163,17 +173,21 @@ namespace PreStormCore
         Relation = 9
     }
 
-    public record LayerInfo(int id, string name, string type, GeometryType? geometryType, Field[] fields, bool hasZ, int? maxRecordCount, Error? error) : IResponse;
+    public record LayerInfo(int id, string name, string type, GeometryType? geometryType, Field[] fields, bool hasZ, int? maxRecordCount, object? error) : IResponse;
     public record Field(string name, string? alias, FieldType? type, bool? nullable, bool? editable, int? length);
-    public record Error(string? message);
-    public record Result(int? objectId, bool success);
-    public record EditResultSet(Result[] addResults, Result[] updateResults, Result[] deleteResults, Error? error) : IResponse;
+    public record Result(int? objectId, bool success, object? error);
+    public record EditResultSet(Result[] addResults, Result[] updateResults, Result[] deleteResults, object? error) : IResponse;
 
-    internal interface IResponse { Error? error { get; } }
-    internal record TokenInfo(string token, long expires, Error? error) : IResponse;
-    internal record OIDSet(int[] objectIds, Error? error) : IResponse;
-    internal record FeatureSet(Graphic[] features, Error? error) : IResponse;
-    internal record Graphic(Dictionary<string, JsonElement> attributes, CatchAllGeometry geometry);
+    internal interface IResponse { object? error { get; } }
+    internal record TokenInfo(string token, long expires, object? error) : IResponse;
+    internal record OIDSet(int[] objectIds, object? error) : IResponse;
+    internal record FeatureSet(Graphic[] features, object? error) : IResponse;
+    internal record Graphic(Attributes attributes, CatchAllGeometry geometry);
+
+    internal class Attributes : Dictionary<string, JsonElement>
+    {
+        public Attributes() : base(StringComparer.OrdinalIgnoreCase) { }
+    }
 
     internal class CatchAllGeometry
     {
