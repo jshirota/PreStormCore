@@ -14,7 +14,7 @@ namespace PreStormCore.Tools
 {
     public static class Generator
     {
-        public static IEnumerable<(string name, string code)> Generate(string url, string token, string tokenUrl, string user, string password, string @namespace, string domain)
+        public static IEnumerable<(string name, string code)> Generate(string url, string token, string tokenUrl, string user, string password, string @namespace, string domain, string exclude)
         {
             var name = Regex.Match(url, @"(?<=(https?://.*?/))(\w|\-)+(?=(/(MapServer|FeatureServer)))", RegexOptions.IgnoreCase).Value;
 
@@ -70,7 +70,7 @@ namespace PreStormCore.Tools
 
                 types.Add((@class, property, layer.id));
 
-                yield return ($"{@namespace}.{@class}", layer.GetClass(@class, $"{url}/{layer.id}", @namespace, useDomain));
+                yield return ($"{@namespace}.{@class}", layer.GetClass(@class, $"{url}/{layer.id}", @namespace, useDomain, exclude));
             }
 
             if (useDomain)
@@ -130,7 +130,7 @@ namespace PreStormCore.Tools
 ");
         }
 
-        private static string GetClass(this Layer layerInfo, string className, string url, string ns, bool domain)
+        private static string GetClass(this Layer layerInfo, string className, string url, string ns, bool domain, string exclude)
         {
             var entries = new List<string> { className };
 
@@ -144,6 +144,7 @@ namespace PreStormCore.Tools
             };
 
             var t = DateTime.UtcNow;
+            var fieldsToExclude = exclude.Split(',').Select(x => x.Trim()).ToArray();
 
             return $@"namespace {ns}
 {{
@@ -154,7 +155,7 @@ namespace PreStormCore.Tools
     /// </summary>
     public class {className} : PreStormCore.Feature{(geometryType == null ? "" : $"<PreStormCore.{geometryType}>")}
     {{
-{string.Join("\r\n\r\n", layerInfo.fields.Select(f => GetProperty(f, domain, entries)).Where(x => x != null))}
+{string.Join("\r\n\r\n", layerInfo.fields.Where(x => !fieldsToExclude.Contains(x.name)).Select(f => GetProperty(f, domain, entries)).Where(x => x != null))}
     }}
 }}
 ";
@@ -191,7 +192,7 @@ namespace PreStormCore.Tools
         /// <para>Alias: {field.alias} </para>
         /// </summary
         [PreStormCore.Mapped(""{field.name}""){(field.nullable == false ? ", System.ComponentModel.DataAnnotations.Required" : "")}]
-        public virtual {csType}{(field.nullable == false ? "" : "?")} {entry} {{ get; set; }} = default!;";
+        public virtual {csType}{(field.nullable == false ? "" : "?")} {entry} {{ get;{(field.editable == true ? "" : " protected")} set; }} = default!;";
         }
 
         private static string GetDomain(Field field, object code, string name, string domain, List<string> reserved)
@@ -285,6 +286,7 @@ namespace PreStormCore.Tools
         public FieldType? type { get; set; }
         public string alias { get; set; }
         public Domain domain { get; set; }
+        public bool? editable { get; set; }
         public bool? nullable { get; set; }
     }
 
