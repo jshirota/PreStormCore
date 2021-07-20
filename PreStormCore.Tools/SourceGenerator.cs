@@ -27,7 +27,7 @@ namespace PreStormCore.Tools
 
             foreach (var service in services)
             {
-                foreach (var (name, code) in cache.GetOrAdd((service.url, service.token, service.tokenUrl, service.user, service.password, service.@namespace, service.domain, service.exclude),
+                foreach (var (name, code) in cache.GetOrAdd((service.url ?? "", service.token ?? "", service.tokenUrl ?? "", service.user ?? "", service.password ?? "", service.@namespace ?? "", service.domain ?? "", service.exclude ?? ""),
                     x => Generator.Generate(x.url, x.token, x.tokenUrl, x.user, x.password, x.@namespace, x.domain, x.exclude).ToArray()))
                 {
                     context.AddSource($"{Guid.NewGuid()}", SourceText.From(code, Encoding.UTF8));
