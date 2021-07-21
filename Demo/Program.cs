@@ -1,8 +1,8 @@
 using System;
 
-var service = new Usa.Service();
+var service = new MarsTest.Service(user: "aaSysadmin", password: "EsriAdmin1130");
 
-foreach (var state in service.States.Download())
+foreach (var property in service.Properties.Download())
 {
-    Console.WriteLine(state.StateName);
+    Console.WriteLine(property.ShapeLength);
 }

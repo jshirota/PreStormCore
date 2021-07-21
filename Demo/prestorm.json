@@ -1,7 +1,10 @@
 ﻿{
   "services": [
     {
-      "url": "https://sampleserver6.arcgisonline.com/arcgis/rest/services/USA/MapServer"
+      "url": "https://services2.arcgis.com/uO6HDVC9yRpI8sIE/arcgis/rest/services/Mars_Test/FeatureServer",
+      "user": "aaSysadmin",
+      "password": "EsriAdmin1130",
+      "exclude": "Shape__Area"
     }
   ]
 }
