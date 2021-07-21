@@ -118,11 +118,11 @@ namespace PreStormCore.Tools
     {{
         private readonly string defaultUrl = ""{url}"";
 {string.Join("\r\n", types.Select(x => $@"        public PreStormCore.{type}<{x.@class}> {x.property} {{ get; }}"))}
-        public Service(string? url = null, string? user = null, string? password = null, string? tokenUrl = ""https://www.arcgis.com/sharing/rest/generateToken"", string? token = null)
+        public Service(string? url = null, string? userName = null, string? password = null, string? tokenUrl = ""https://www.arcgis.com/sharing/rest/generateToken"", string? token = null)
         {{
-            PreStormCore.{type}<T> Create<T>(int id) where T : PreStormCore.Feature => string.IsNullOrEmpty(user) || string.IsNullOrEmpty(password)
+            PreStormCore.{type}<T> Create<T>(int id) where T : PreStormCore.Feature => string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password)
                 ? new PreStormCore.FeatureLayer<T>($""{{url ?? defaultUrl}}/{{id}}"", token)
-                : new PreStormCore.FeatureLayer<T>($""{{url ?? defaultUrl}}/{{id}}"", user, password, tokenUrl!);
+                : new PreStormCore.FeatureLayer<T>($""{{url ?? defaultUrl}}/{{id}}"", userName, password, tokenUrl!);
 {string.Join("\r\n", types.Select(x => $@"            {x.property} = Create<{x.@class}>({x.id});"))}
         }}
     }}
