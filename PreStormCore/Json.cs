@@ -31,7 +31,7 @@ namespace PreStormCore
 
         public static Geometry? ToGeometry(string json)
         {
-            if (json.Contains("x") && json.Contains("y"))
+            if (json.Contains('x') && json.Contains('y'))
                 return Point.FromJson(json);
 
             if (json.Contains("points"))

@@ -43,7 +43,7 @@ namespace PreStormCore
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException($"An error occurred while processing a request against '{url}'.  {ex.Message}");
+                throw new InvalidOperationException($"An error occurred while processing a request against '{url}'.  {ex.Message}", ex);
             }
         }
 
