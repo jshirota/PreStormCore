@@ -28,10 +28,8 @@ namespace PreStormCore
             {
                 var o = geometrySelector(((dynamic)feature).Geometry);
 
-                if (o is string)
-                    values.Add(o);
-                else
-                    values.AddRange((o as IEnumerable ?? new[] { o }).Cast<object>());
+                if (o is string) values.Add(o);
+                else values.AddRange((o as IEnumerable ?? new[] { o }).Cast<object>());
             }
 
             dateSelector ??= (d => d.ToString("o"));

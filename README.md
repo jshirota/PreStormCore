@@ -1,6 +1,6 @@
 # PreStormCore
 
-- .NET 6.0
+- .NET 5.0
 - Generally compatible with the original PreStorm (but not quite)
 - Linux, Mac and Windows
 - Nullable reference type support

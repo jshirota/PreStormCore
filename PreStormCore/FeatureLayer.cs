@@ -88,7 +88,7 @@ namespace PreStormCore
         {
             var returnGeometry = typeof(T).HasGeometry();
 
-            return objectIds.Partition(batchSize)
+            return objectIds.Chunk(batchSize)
                 .AsParallel()
                 .AsOrdered()
                 .WithDegreeOfParallelism(degreeOfParallelism < 1 ? 1 : degreeOfParallelism)
@@ -135,7 +135,7 @@ namespace PreStormCore
         {
             var returnGeometry = typeof(T).HasGeometry();
 
-            foreach (var ids in objectIds.Partition(batchSize))
+            foreach (var ids in objectIds.Chunk(batchSize))
             {
                 var featureSet = await Esri.GetFeatureSet(Url, Token, returnGeometry, LayerInfo.hasZ, whereClause, extraParameters, ids);
 

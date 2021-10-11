@@ -9,25 +9,25 @@ namespace PreStormCore
             => (X, Y) = (x, y);
 
         public static implicit operator Vector(Point point)
-            => new Vector(point.x, point.y);
+            => new(point.x, point.y);
 
         public static implicit operator Point(Vector vector)
-            => new Point { x = vector.X, y = vector.Y };
+            => new() { x = vector.X, y = vector.Y };
 
         public static Vector operator +(Vector v1, Vector v2)
-            => new Vector(v1.X + v2.X, v1.Y + v2.Y);
+            => new(v1.X + v2.X, v1.Y + v2.Y);
 
         public static Vector operator -(Vector v1, Vector v2)
-            => new Vector(v1.X - v2.X, v1.Y - v2.Y);
+            => new(v1.X - v2.X, v1.Y - v2.Y);
 
         public static Vector operator *(Vector v, double n)
-            => new Vector(v.X * n, v.Y * n);
+            => new(v.X * n, v.Y * n);
 
         public static Vector operator *(double n, Vector v)
             => v * n;
 
         public static Vector operator /(Vector v, double n)
-            => new Vector(v.X / n, v.Y / n);
+            => new(v.X / n, v.Y / n);
 
         public static double CrossProduct(Vector v1, Vector v2)
             => v1.X * v2.Y - v1.Y * v2.X;

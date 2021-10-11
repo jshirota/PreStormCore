@@ -11,8 +11,8 @@ namespace PreStormCore
     {
         private readonly Dictionary<string, string> propertyToField;
         private readonly Dictionary<string, string> fieldToProperty;
-        internal readonly Dictionary<string, object?> UnmappedFields = new Dictionary<string, object?>();
-        internal readonly List<string> ChangedFields = new List<string>();
+        internal readonly Dictionary<string, object?> UnmappedFields = new();
+        internal readonly List<string> ChangedFields = new();
         internal bool GeometryChanged;
 
         protected Feature()

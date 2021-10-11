@@ -6,22 +6,22 @@ namespace PreStormCore
 {
     public static class Json
     {
-        private static readonly JsonSerializerOptions options = new JsonSerializerOptions();
+        private static readonly JsonSerializerOptions Options = new();
 
         static Json()
         {
-            options.IgnoreNullValues = true;
-            options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+            Options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+            Options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         }
 
         internal static T Deserialize<T>(this string json)
         {
-            return JsonSerializer.Deserialize<T>(json, options)!;
+            return JsonSerializer.Deserialize<T>(json, Options)!;
         }
 
         internal static string Serialize(this object obj)
         {
-            return JsonSerializer.Serialize(obj, options);
+            return JsonSerializer.Serialize(obj, Options);
         }
 
         public static string ToJson(this GeometryBase geometry)

@@ -10,7 +10,7 @@ namespace PreStormCore
 {
     internal static class Esri
     {
-        public static readonly DateTime BaseTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        public static readonly DateTime BaseTime = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         private static async Task<T> GetResponse<T>(string url, string? data, string? token = null) where T : IResponse
         {

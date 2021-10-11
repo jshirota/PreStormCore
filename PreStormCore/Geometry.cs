@@ -24,7 +24,7 @@ namespace PreStormCore
         }
 
         public static implicit operator SpatialReference(int wkid)
-            => new SpatialReference { wkid = wkid };
+            => new() { wkid = wkid };
     }
 
     public sealed class Point : Geometry

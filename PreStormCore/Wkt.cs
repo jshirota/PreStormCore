@@ -84,19 +84,14 @@ namespace PreStormCore
 
         public static string ToWkt(this Geometry geometry)
         {
-            if (geometry is Point point)
-                return point.ToWkt();
-
-            if (geometry is Multipoint multipoint)
-                return multipoint.ToWkt();
-
-            if (geometry is Polyline polyline)
-                return polyline.ToWkt();
-
-            if (geometry is Polygon polygon)
-                return polygon.ToWkt();
-
-            throw new ArgumentException("This geometry type is not supported.", nameof(geometry));
+            return geometry switch
+            {
+                Point point => point.ToWkt(),
+                Multipoint multipoint => multipoint.ToWkt(),
+                Polyline polyline => polyline.ToWkt(),
+                Polygon polygon => polygon.ToWkt(),
+                _ => throw new ArgumentException("This geometry type is not supported.", nameof(geometry))
+            };
         }
 
         public static Geometry ToGeometry(string wkt)
