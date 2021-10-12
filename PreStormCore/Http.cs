@@ -9,14 +9,21 @@ namespace PreStormCore
 {
     internal static class Http
     {
+        private static readonly HttpClient HttpClient;
         private static readonly int MaxRetryAttempts = 4;
+
+        static Http()
+        {
+            HttpClient = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip });
+            HttpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+            HttpClient.Timeout = TimeSpan.FromMinutes(4);
+        }
 
         public static async Task<T> Get<T>(string url, int attempt = 0)
         {
             try
             {
-                using var http = GetHttpClient();
-                var response = await http.GetAsync(url);
+                var response = await HttpClient.GetAsync(url);
                 var json = await response.Content.ReadAsStringAsync();
                 return json.Deserialize<T>()!;
             }
@@ -34,19 +41,10 @@ namespace PreStormCore
 
         public static async Task<T> Post<T>(string url, string data)
         {
-            using var http = GetHttpClient();
             var content = new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded");
-            var response = await http.PostAsync(url, content);
+            var response = await HttpClient.PostAsync(url, content);
             var json = await response.Content.ReadAsStringAsync();
             return json.Deserialize<T>()!;
-        }
-
-        private static HttpClient GetHttpClient()
-        {
-            var http = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip });
-            http.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
-            http.Timeout = TimeSpan.FromMinutes(4);
-            return http;
         }
     }
 }
