@@ -8,35 +8,49 @@ using Newtonsoft.Json;
 
 namespace PreStormCore.Tools
 {
-    [Generator]
-    public class SourceGenerator : ISourceGenerator
+    [Generator(LanguageNames.CSharp)]
+    public class SourceGenerator : IIncrementalGenerator
     {
-        private static readonly ConcurrentDictionary<(string url, string token, string tokenUrl, string user, string password, string @namespace, string domain, string exclude), (string name, string code)[]> cache
-            = new ConcurrentDictionary<(string url, string token, string tokenUrl, string user, string password, string @namespace, string domain, string exclude), (string name, string code)[]>();
+        private static readonly ConcurrentDictionary<string, (string name, string code)[]> cache
+            = new ConcurrentDictionary<string, (string name, string code)[]>();
 
-        public void Execute(GeneratorExecutionContext context)
+        public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            var file = context.AdditionalFiles.SingleOrDefault(x => x.Path.EndsWith("prestorm.json", StringComparison.InvariantCultureIgnoreCase));
+            var additionalTexts = context.AdditionalTextsProvider
+                .Where(x => x.Path.EndsWith("prestorm.json"))
+                .Select((x, y) => x.GetText(y)?.ToString());
 
-            if (file is null)
-                return;
-
-            var type = new { url = "", token = "", tokenUrl = "", user = "", password = "", @namespace = "", domain = "", exclude = "" };
-
-            var services = JsonConvert.DeserializeAnonymousType(file.GetText().ToString(), new { services = new[] { type } }).services;
-
-            foreach (var service in services)
+            context.RegisterSourceOutput(additionalTexts, (source, json) =>
             {
-                foreach (var (name, code) in cache.GetOrAdd((service.url ?? "", service.token ?? "", service.tokenUrl ?? "", service.user ?? "", service.password ?? "", service.@namespace ?? "", service.domain ?? "", service.exclude ?? ""),
-                    x => Generator.Generate(x.url, x.token, x.tokenUrl, x.user, x.password, x.@namespace, x.domain, x.exclude).ToArray()))
-                {
-                    context.AddSource($"{Guid.NewGuid()}", SourceText.From(code, Encoding.UTF8));
-                }
-            }
-        }
+                if (string.IsNullOrWhiteSpace(json))
+                    return;
 
-        public void Initialize(GeneratorInitializationContext context)
-        {
+                var services = JsonConvert.DeserializeAnonymousType(json, new { services = Array.Empty<ServiceDefinition>() }).services;
+
+                foreach (var s in services)
+                {
+                    foreach (var (name, code) in cache.GetOrAdd(s, x
+                        => Generator.Generate(s.Url, s.Token, s.TokenUrl, s.Url, s.Password, s.Namespace, s.Domain, s.Exclude).ToArray()))
+                    {
+                        source.AddSource($"{Guid.NewGuid()}", SourceText.From(code, Encoding.UTF8));
+                    }
+                }
+            });
         }
+    }
+
+    public class ServiceDefinition
+    {
+        public string Url { get; set; }
+        public string Token { get; set; }
+        public string TokenUrl { get; set; }
+        public string User { get; set; }
+        public string Password { get; set; }
+        public string Namespace { get; set; }
+        public string Domain { get; set; }
+        public string Exclude { get; set; }
+
+        public static implicit operator string(ServiceDefinition serviceDefinition)
+            => JsonConvert.SerializeObject(serviceDefinition);
     }
 }

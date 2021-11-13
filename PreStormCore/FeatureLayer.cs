@@ -1,191 +1,185 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Net;
 
-namespace PreStormCore
+namespace PreStormCore;
+
+public interface ILayer<T> where T : Feature
 {
-    public interface ILayer<T> where T : Feature
+    string Url { get; }
+    string? Token { get; }
+    LayerInfo LayerInfo { get; }
+    IEnumerable<T> Download(params int[] objectIds);
+    IEnumerable<T> Download(string? whereClause = null, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null);
+    IEnumerable<T> Download(GeometryBase? geometry, SpatialRel spatialRel, string? whereClause = null, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null);
+    IAsyncEnumerable<T> DownloadAsync(params int[] objectIds);
+    IAsyncEnumerable<T> DownloadAsync(string? whereClause = null, string? extraParameters = null, bool keepQuerying = false);
+    IAsyncEnumerable<T> DownloadAsync(GeometryBase? geometry, SpatialRel spatialRel, string? whereClause = null, string? extraParameters = null, bool keepQuerying = false);
+}
+
+public class Layer<T> : ILayer<T> where T : Feature
+{
+    private readonly int maxRecordCount = 10;
+    private readonly Token? token;
+    public string? Token => token?.ToString();
+    public string Url { get; }
+    public LayerInfo LayerInfo { get; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Layer{T}"/> class.
+    /// </summary>
+    /// <param name="url">Layer url (ends with the layer id).</param>
+    /// <param name="token">Token.</param>
+    public Layer(string url, string? token = null)
     {
-        string Url { get; }
-        string? Token { get; }
-        LayerInfo LayerInfo { get; }
-        IEnumerable<T> Download(params int[] objectIds);
-        IEnumerable<T> Download(string? whereClause = null, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null);
-        IEnumerable<T> Download(GeometryBase? geometry, SpatialRel spatialRel, string? whereClause = null, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null);
-        IAsyncEnumerable<T> DownloadAsync(params int[] objectIds);
-        IAsyncEnumerable<T> DownloadAsync(string? whereClause = null, string? extraParameters = null, bool keepQuerying = false);
-        IAsyncEnumerable<T> DownloadAsync(GeometryBase? geometry, SpatialRel spatialRel, string? whereClause = null, string? extraParameters = null, bool keepQuerying = false);
+        this.token = token is null ? null : new Token(token);
+        Url = url;
+        LayerInfo = Esri.GetLayer(url, Token).Result;
     }
 
-    public class Layer<T> : ILayer<T> where T : Feature
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Layer{T}"/> class.
+    /// </summary>
+    /// <param name="url">Layer url (ends with the layer id).</param>
+    /// <param name="user">User name.</param>
+    /// <param name="password">Password.</param>
+    /// <param name="tokenUrl">Generate token url (defaults to ArcGIS Online).</param>
+    public Layer(string url, string user, string password, string tokenUrl = "https://www.arcgis.com/sharing/rest/generateToken")
     {
-        private readonly int maxRecordCount = 10;
-        private readonly Token? token;
-        public string? Token => token?.ToString();
-        public string Url { get; }
-        public LayerInfo LayerInfo { get; }
+        this.token = new Token(tokenUrl, user, password);
+        Url = url;
+        LayerInfo = Esri.GetLayer(url, Token).Result;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Layer{T}"/> class.
-        /// </summary>
-        /// <param name="url">Layer url (ends with the layer id).</param>
-        /// <param name="token">Token.</param>
-        public Layer(string url, string? token = null)
+    public IEnumerable<T> Download(params int[] objectIds)
+    {
+        return Download(objectIds, null, null, LayerInfo.maxRecordCount ?? maxRecordCount, 1, null);
+    }
+
+    public IEnumerable<T> Download(string? whereClause = null, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null)
+    {
+        var featureSet = Esri.GetFeatureSet(Url, Token, typeof(T).HasGeometry(), LayerInfo.hasZ, whereClause, extraParameters, null).Result;
+
+        foreach (var g in featureSet.features)
+            yield return g.ToFeature<T>(LayerInfo);
+
+        var objectIds = featureSet.features.Select(g => g.attributes[LayerInfo.GetObjectIdFieldName()].GetInt32()).ToArray();
+
+        if (!keepQuerying || objectIds.Length == 0)
+            yield break;
+
+        var remainingObjectIds = Esri.GetOIDSet(Url, Token, whereClause, extraParameters).Result.objectIds.Except(objectIds);
+
+        foreach (var f in Download(remainingObjectIds, whereClause, extraParameters, LayerInfo.maxRecordCount ?? objectIds.Length, degreeOfParallelism, cancellationToken))
+            yield return f;
+    }
+
+    public IEnumerable<T> Download(GeometryBase? geometry, SpatialRel spatialRel, string? whereClause = null, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null)
+    {
+        var spatialFilter = $"geometry={WebUtility.UrlEncode(geometry?.ToJson())}&geometryType={Layer<T>.ToGeometryType(geometry)}&spatialRel=esriSpatialRel{spatialRel}";
+
+        return Download(whereClause, string.IsNullOrEmpty(extraParameters) ? spatialFilter : (extraParameters + "&" + spatialFilter), keepQuerying, degreeOfParallelism, cancellationToken);
+    }
+
+    private IEnumerable<T> Download(IEnumerable<int> objectIds, string? whereClause, string? extraParameters, int batchSize, int degreeOfParallelism, CancellationToken? cancellationToken)
+    {
+        var returnGeometry = typeof(T).HasGeometry();
+
+        return objectIds.Chunk(batchSize)
+            .AsParallel()
+            .AsOrdered()
+            .WithDegreeOfParallelism(degreeOfParallelism < 1 ? 1 : degreeOfParallelism)
+            .WithCancellation(cancellationToken ?? CancellationToken.None)
+            .SelectMany(ids => Esri.GetFeatureSet(Url, Token, returnGeometry, LayerInfo.hasZ, whereClause, extraParameters, ids).Result.features
+                .Select(g => g.ToFeature<T>(LayerInfo)));
+    }
+
+    public async IAsyncEnumerable<T> DownloadAsync(params int[] objectIds)
+    {
+        await foreach (var feature in DownloadAsync(objectIds, null, null, LayerInfo.maxRecordCount ?? maxRecordCount))
+            yield return feature;
+    }
+
+    public async IAsyncEnumerable<T> DownloadAsync(string? whereClause = null, string? extraParameters = null, bool keepQuerying = false)
+    {
+        var featureSet = await Esri.GetFeatureSet(Url, Token, typeof(T).HasGeometry(), LayerInfo.hasZ, whereClause, extraParameters, null);
+
+        foreach (var graphic in featureSet.features)
+            yield return graphic.ToFeature<T>(LayerInfo);
+
+        var objectIds = featureSet.features.Select(g => g.attributes[LayerInfo.GetObjectIdFieldName()].GetInt32()).ToArray();
+
+        if (!keepQuerying || objectIds.Length == 0)
+            yield break;
+
+        var oidSet = await Esri.GetOIDSet(Url, Token, whereClause, extraParameters);
+
+        var remainingObjectIds = oidSet.objectIds.Except(objectIds);
+
+        await foreach (var feature in DownloadAsync(remainingObjectIds, whereClause, extraParameters, LayerInfo.maxRecordCount ?? objectIds.Length))
+            yield return feature;
+    }
+
+    public async IAsyncEnumerable<T> DownloadAsync(GeometryBase? geometry, SpatialRel spatialRel, string? whereClause = null, string? extraParameters = null, bool keepQuerying = false)
+    {
+        var spatialFilter = $"geometry={WebUtility.UrlEncode(geometry?.ToJson())}&geometryType={Layer<T>.ToGeometryType(geometry)}&spatialRel=esriSpatialRel{spatialRel}";
+
+        await foreach (var feature in DownloadAsync(whereClause, string.IsNullOrEmpty(extraParameters) ? spatialFilter : (extraParameters + "&" + spatialFilter), keepQuerying))
+            yield return feature;
+    }
+
+    private async IAsyncEnumerable<T> DownloadAsync(IEnumerable<int> objectIds, string? whereClause, string? extraParameters, int batchSize)
+    {
+        var returnGeometry = typeof(T).HasGeometry();
+
+        foreach (var ids in objectIds.Chunk(batchSize))
         {
-            this.token = token is null ? null : new Token(token);
-            Url = url;
-            LayerInfo = Esri.GetLayer(url, Token).Result;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Layer{T}"/> class.
-        /// </summary>
-        /// <param name="url">Layer url (ends with the layer id).</param>
-        /// <param name="user">User name.</param>
-        /// <param name="password">Password.</param>
-        /// <param name="tokenUrl">Generate token url (defaults to ArcGIS Online).</param>
-        public Layer(string url, string user, string password, string tokenUrl = "https://www.arcgis.com/sharing/rest/generateToken")
-        {
-            this.token = new Token(tokenUrl, user, password);
-            Url = url;
-            LayerInfo = Esri.GetLayer(url, Token).Result;
-        }
-
-        public IEnumerable<T> Download(params int[] objectIds)
-        {
-            return Download(objectIds, null, null, LayerInfo.maxRecordCount ?? maxRecordCount, 1, null);
-        }
-
-        public IEnumerable<T> Download(string? whereClause = null, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null)
-        {
-            var featureSet = Esri.GetFeatureSet(Url, Token, typeof(T).HasGeometry(), LayerInfo.hasZ, whereClause, extraParameters, null).Result;
-
-            foreach (var g in featureSet.features)
-                yield return g.ToFeature<T>(LayerInfo);
-
-            var objectIds = featureSet.features.Select(g => g.attributes[LayerInfo.GetObjectIdFieldName()].GetInt32()).ToArray();
-
-            if (!keepQuerying || objectIds.Length == 0)
-                yield break;
-
-            var remainingObjectIds = Esri.GetOIDSet(Url, Token, whereClause, extraParameters).Result.objectIds.Except(objectIds);
-
-            foreach (var f in Download(remainingObjectIds, whereClause, extraParameters, LayerInfo.maxRecordCount ?? objectIds.Length, degreeOfParallelism, cancellationToken))
-                yield return f;
-        }
-
-        public IEnumerable<T> Download(GeometryBase? geometry, SpatialRel spatialRel, string? whereClause = null, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null)
-        {
-            var spatialFilter = $"geometry={WebUtility.UrlEncode(geometry?.ToJson())}&geometryType={Layer<T>.ToGeometryType(geometry)}&spatialRel=esriSpatialRel{spatialRel}";
-
-            return Download(whereClause, string.IsNullOrEmpty(extraParameters) ? spatialFilter : (extraParameters + "&" + spatialFilter), keepQuerying, degreeOfParallelism, cancellationToken);
-        }
-
-        private IEnumerable<T> Download(IEnumerable<int> objectIds, string? whereClause, string? extraParameters, int batchSize, int degreeOfParallelism, CancellationToken? cancellationToken)
-        {
-            var returnGeometry = typeof(T).HasGeometry();
-
-            return objectIds.Chunk(batchSize)
-                .AsParallel()
-                .AsOrdered()
-                .WithDegreeOfParallelism(degreeOfParallelism < 1 ? 1 : degreeOfParallelism)
-                .WithCancellation(cancellationToken ?? CancellationToken.None)
-                .SelectMany(ids => Esri.GetFeatureSet(Url, Token, returnGeometry, LayerInfo.hasZ, whereClause, extraParameters, ids).Result.features
-                    .Select(g => g.ToFeature<T>(LayerInfo)));
-        }
-
-        public async IAsyncEnumerable<T> DownloadAsync(params int[] objectIds)
-        {
-            await foreach (var feature in DownloadAsync(objectIds, null, null, LayerInfo.maxRecordCount ?? maxRecordCount))
-                yield return feature;
-        }
-
-        public async IAsyncEnumerable<T> DownloadAsync(string? whereClause = null, string? extraParameters = null, bool keepQuerying = false)
-        {
-            var featureSet = await Esri.GetFeatureSet(Url, Token, typeof(T).HasGeometry(), LayerInfo.hasZ, whereClause, extraParameters, null);
+            var featureSet = await Esri.GetFeatureSet(Url, Token, returnGeometry, LayerInfo.hasZ, whereClause, extraParameters, ids);
 
             foreach (var graphic in featureSet.features)
                 yield return graphic.ToFeature<T>(LayerInfo);
-
-            var objectIds = featureSet.features.Select(g => g.attributes[LayerInfo.GetObjectIdFieldName()].GetInt32()).ToArray();
-
-            if (!keepQuerying || objectIds.Length == 0)
-                yield break;
-
-            var oidSet = await Esri.GetOIDSet(Url, Token, whereClause, extraParameters);
-
-            var remainingObjectIds = oidSet.objectIds.Except(objectIds);
-
-            await foreach (var feature in DownloadAsync(remainingObjectIds, whereClause, extraParameters, LayerInfo.maxRecordCount ?? objectIds.Length))
-                yield return feature;
-        }
-
-        public async IAsyncEnumerable<T> DownloadAsync(GeometryBase? geometry, SpatialRel spatialRel, string? whereClause = null, string? extraParameters = null, bool keepQuerying = false)
-        {
-            var spatialFilter = $"geometry={WebUtility.UrlEncode(geometry?.ToJson())}&geometryType={Layer<T>.ToGeometryType(geometry)}&spatialRel=esriSpatialRel{spatialRel}";
-
-            await foreach (var feature in DownloadAsync(whereClause, string.IsNullOrEmpty(extraParameters) ? spatialFilter : (extraParameters + "&" + spatialFilter), keepQuerying))
-                yield return feature;
-        }
-
-        private async IAsyncEnumerable<T> DownloadAsync(IEnumerable<int> objectIds, string? whereClause, string? extraParameters, int batchSize)
-        {
-            var returnGeometry = typeof(T).HasGeometry();
-
-            foreach (var ids in objectIds.Chunk(batchSize))
-            {
-                var featureSet = await Esri.GetFeatureSet(Url, Token, returnGeometry, LayerInfo.hasZ, whereClause, extraParameters, ids);
-
-                foreach (var graphic in featureSet.features)
-                    yield return graphic.ToFeature<T>(LayerInfo);
-            }
-        }
-
-        private static GeometryType ToGeometryType(GeometryBase? geometry)
-        {
-            return geometry switch
-            {
-                Point => GeometryType.esriGeometryPoint,
-                Multipoint => GeometryType.esriGeometryMultipoint,
-                Polyline => GeometryType.esriGeometryPolyline,
-                Polygon => GeometryType.esriGeometryPolygon,
-                Envelope => GeometryType.esriGeometryEnvelope,
-                _ => throw new ArgumentException("This geometry type is not supported.", nameof(geometry))
-            };
         }
     }
 
-    public interface ICreate<T> : ILayer<T> where T : Feature { }
-    public interface IUpdate<T> : ILayer<T> where T : Feature { }
-    public interface IDelete<T> : ILayer<T> where T : Feature { }
-    public interface ICreateOrUpdate<T> : ICreate<T>, IUpdate<T> where T : Feature { }
-    public interface ICreateOrDelete<T> : ICreate<T>, IDelete<T> where T : Feature { }
-    public interface IUpdateOrDelete<T> : IUpdate<T>, IDelete<T> where T : Feature { }
-    public interface IFeatureLayer<T> : ICreate<T>, IUpdate<T>, IDelete<T> where T : Feature { }
-
-    public class FeatureLayer<T> : Layer<T>, IFeatureLayer<T> where T : Feature
+    private static GeometryType ToGeometryType(GeometryBase? geometry)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FeatureLayer{T}"/> class.
-        /// </summary>
-        /// <param name="url">Layer url (ends with the layer id).</param>
-        /// <param name="token">Token.</param>
-        public FeatureLayer(string url, string? token = null) : base(url, token)
+        return geometry switch
         {
-        }
+            Point => GeometryType.esriGeometryPoint,
+            Multipoint => GeometryType.esriGeometryMultipoint,
+            Polyline => GeometryType.esriGeometryPolyline,
+            Polygon => GeometryType.esriGeometryPolygon,
+            Envelope => GeometryType.esriGeometryEnvelope,
+            _ => throw new ArgumentException("This geometry type is not supported.", nameof(geometry))
+        };
+    }
+}
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FeatureLayer{T}"/> class.
-        /// </summary>
-        /// <param name="url">Layer url (ends with the layer id).</param>
-        /// <param name="user">User name.</param>
-        /// <param name="password">Password.</param>
-        /// <param name="tokenUrl">Generate token url (defaults to ArcGIS Online).</param>
-        public FeatureLayer(string url, string user, string password, string tokenUrl = "https://www.arcgis.com/sharing/rest/generateToken") : base(url, user, password, tokenUrl)
-        {
-        }
+public interface ICreate<T> : ILayer<T> where T : Feature { }
+public interface IUpdate<T> : ILayer<T> where T : Feature { }
+public interface IDelete<T> : ILayer<T> where T : Feature { }
+public interface ICreateOrUpdate<T> : ICreate<T>, IUpdate<T> where T : Feature { }
+public interface ICreateOrDelete<T> : ICreate<T>, IDelete<T> where T : Feature { }
+public interface IUpdateOrDelete<T> : IUpdate<T>, IDelete<T> where T : Feature { }
+public interface IFeatureLayer<T> : ICreate<T>, IUpdate<T>, IDelete<T> where T : Feature { }
+
+public class FeatureLayer<T> : Layer<T>, IFeatureLayer<T> where T : Feature
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FeatureLayer{T}"/> class.
+    /// </summary>
+    /// <param name="url">Layer url (ends with the layer id).</param>
+    /// <param name="token">Token.</param>
+    public FeatureLayer(string url, string? token = null) : base(url, token)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FeatureLayer{T}"/> class.
+    /// </summary>
+    /// <param name="url">Layer url (ends with the layer id).</param>
+    /// <param name="user">User name.</param>
+    /// <param name="password">Password.</param>
+    /// <param name="tokenUrl">Generate token url (defaults to ArcGIS Online).</param>
+    public FeatureLayer(string url, string user, string password, string tokenUrl = "https://www.arcgis.com/sharing/rest/generateToken") : base(url, user, password, tokenUrl)
+    {
     }
 }

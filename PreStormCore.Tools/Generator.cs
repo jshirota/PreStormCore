@@ -16,6 +16,15 @@ namespace PreStormCore.Tools
     {
         public static IEnumerable<(string name, string code)> Generate(string url, string token, string tokenUrl, string user, string password, string @namespace, string domain, string exclude)
         {
+            url ??= "";
+            token ??= "";
+            tokenUrl ??= "";
+            user ??= "";
+            password ??= "";
+            @namespace ??= "";
+            domain ??= "";
+            exclude ??= "";
+
             var name = Regex.Match(url, @"(?<=(https?://.*?/))(\w|\-)+(?=(/(MapServer|FeatureServer)))", RegexOptions.IgnoreCase).Value;
 
             if (name == string.Empty)
@@ -89,12 +98,11 @@ namespace PreStormCore.Tools
                 {
                     var entries = new List<string> { n };
 
-                    yield return ($"{@namespace}.{n}", $@"namespace {@namespace}
+                    yield return ($"{@namespace}.{n}", $@"namespace {@namespace};
+
+public enum {n}
 {{
-    public enum {n}
-    {{
-        {string.Join(",\r\n        ", d.codedValues.Select(y => GetDomain(f, y.code, y.name, domain, entries)))}
-    }}
+    {string.Join(",\r\n    ", d.codedValues.Select(y => GetDomain(f, y.code, y.name, domain, entries)))}
 }}
 ");
                 }
@@ -112,19 +120,18 @@ namespace PreStormCore.Tools
                 { SupportsCreate: true, SupportsUpdate: true, SupportsDelete: true } => "IFeatureLayer",
             };
 
-            yield return ($"{@namespace}.Service", $@"namespace {@namespace}
+            yield return ($"{@namespace}.Service", $@"namespace {@namespace};
+
+public class Service
 {{
-    public class Service
+    private readonly string defaultUrl = ""{url}"";
+{string.Join("\r\n", types.Select(x => $@"    public PreStormCore.{type}<{x.@class}> {x.property} {{ get; }}"))}
+    public Service(string? url = null, string? user = null, string? password = null, string? tokenUrl = ""https://www.arcgis.com/sharing/rest/generateToken"", string? token = null)
     {{
-        private readonly string defaultUrl = ""{url}"";
-{string.Join("\r\n", types.Select(x => $@"        public PreStormCore.{type}<{x.@class}> {x.property} {{ get; }}"))}
-        public Service(string? url = null, string? user = null, string? password = null, string? tokenUrl = ""https://www.arcgis.com/sharing/rest/generateToken"", string? token = null)
-        {{
-            PreStormCore.{type}<T> Create<T>(int id) where T : PreStormCore.Feature => string.IsNullOrEmpty(user) || string.IsNullOrEmpty(password)
-                ? new PreStormCore.FeatureLayer<T>($""{{url ?? defaultUrl}}/{{id}}"", token)
-                : new PreStormCore.FeatureLayer<T>($""{{url ?? defaultUrl}}/{{id}}"", user, password, tokenUrl!);
-{string.Join("\r\n", types.Select(x => $@"            {x.property} = Create<{x.@class}>({x.id});"))}
-        }}
+        PreStormCore.{type}<T> Create<T>(int id) where T : PreStormCore.Feature => string.IsNullOrEmpty(user) || string.IsNullOrEmpty(password)
+            ? new PreStormCore.FeatureLayer<T>($""{{url ?? defaultUrl}}/{{id}}"", token)
+            : new PreStormCore.FeatureLayer<T>($""{{url ?? defaultUrl}}/{{id}}"", user, password, tokenUrl!);
+{string.Join("\r\n", types.Select(x => $@"        {x.property} = Create<{x.@class}>({x.id});"))}
     }}
 }}
 ");
@@ -146,17 +153,16 @@ namespace PreStormCore.Tools
             var t = DateTime.UtcNow;
             var fieldsToExclude = exclude.Split(',').Select(x => x.Trim()).ToArray();
 
-            return $@"namespace {ns}
+            return $@"namespace {ns};
+
+/// <summary>
+/// <para>This code was generated on {t.ToLongDateString()} at {t.ToLongTimeString()} (UTC) based on the service schema. </para>
+/// <para>Service: {url} </para>
+/// <para>Layer: {layerInfo.name} </para>
+/// </summary>
+public class {className} : PreStormCore.Feature{(geometryType == null ? "" : $"<PreStormCore.{geometryType}>")}
 {{
-    /// <summary>
-    /// <para>This code was generated on {t.ToLongDateString()} at {t.ToLongTimeString()} (UTC) based on the service schema. </para>
-    /// <para>Service: {url} </para>
-    /// <para>Layer: {layerInfo.name} </para>
-    /// </summary>
-    public class {className} : PreStormCore.Feature{(geometryType == null ? "" : $"<PreStormCore.{geometryType}>")}
-    {{
 {string.Join("\r\n\r\n", layerInfo.fields.Where(x => !fieldsToExclude.Contains(x.name)).Select(f => GetProperty(f, domain, entries)).Where(x => x != null))}
-    }}
 }}
 ";
         }
@@ -187,12 +193,12 @@ namespace PreStormCore.Tools
             var entry = field.name.ToSafeName(false, true, reserved);
             reserved.Add(entry);
 
-            return $@"        /// <summary>
-        /// <para>Field: {field.name} </para>
-        /// <para>Alias: {field.alias} </para>
-        /// </summary
-        [PreStormCore.Mapped(""{field.name}""){(field.nullable == false ? ", System.ComponentModel.DataAnnotations.Required" : "")}]
-        public virtual {csType}{(field.nullable == false ? "" : "?")} {entry} {{ get;{(field.editable == true ? "" : " protected")} set; }} = default!;";
+            return $@"    /// <summary>
+    /// <para>Field: {field.name} </para>
+    /// <para>Alias: {field.alias} </para>
+    /// </summary
+    [PreStormCore.Mapped(""{field.name}""){(field.nullable == false ? ", System.ComponentModel.DataAnnotations.Required" : "")}]
+    public virtual {csType}{(field.nullable == false ? "" : "?")} {entry} {{ get;{(field.editable == true ? "" : " protected")} set; }} = default!;";
         }
 
         private static string GetDomain(Field field, object code, string name, string domain, List<string> reserved)

@@ -1,17 +1,15 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 
-namespace PreStormCore
+namespace PreStormCore;
+
+[AttributeUsage(AttributeTargets.Property)]
+public class Mapped : Attribute
 {
-    [AttributeUsage(AttributeTargets.Property)]
-    public class Mapped : Attribute
-    {
-        public string FieldName { get; }
-        public PropertyInfo? Property { get; internal set; }
+    public string FieldName { get; }
+    public PropertyInfo? Property { get; internal set; }
 
-        public Mapped(string fieldName)
-        {
-            FieldName = fieldName;
-        }
+    public Mapped(string fieldName)
+    {
+        FieldName = fieldName;
     }
 }
