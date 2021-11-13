@@ -1,4 +1,3 @@
-using System;
 
 var service = new Usa.Service();
 

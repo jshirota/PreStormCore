@@ -5,7 +5,7 @@
 		<LangVersion>8.0</LangVersion>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<BuildOutputTargetFolder>analyzers</BuildOutputTargetFolder>
-		<Version>2.1.5</Version>
+		<Version>2.1.9</Version>
 		<Authors>Jiro Shirota</Authors>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 	</PropertyGroup>
@@ -21,10 +21,6 @@
 		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/netstandard2.0" Visible="false" />
 		<None Include="$(PkgNewtonsoft_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/netstandard2.0" Visible="false" />
 		<None Include="$(PkgSystem_Security_Permissions)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/netstandard2.0" Visible="false" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Remove="bin\Debug\netstandard2.0\\PreStormCore.Tools.dll" />
 	</ItemGroup>
 
 </Project>

@@ -1,17 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <AdditionalFiles Include="prestorm.json" />
-  </ItemGroup>
+	<ItemGroup>
+		<AdditionalFiles Include="prestorm.json" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="PreStormCore.Tools" Version="2.1.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="PreStormCore" Version="2.1.9" />
+		<PackageReference Include="PreStormCore.Tools" Version="2.1.9" />
+	</ItemGroup>
 
 </Project>
