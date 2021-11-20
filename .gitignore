@@ -18,3 +18,11 @@
 /Newtonsoft.Json.dll
 /Clean.exe
 /TestApp
+/TestAppCSharp
+/TestAppFSharp
+/PreStormCore.CSharp/obj
+/PreStormCore.CSharp/bin/Debug
+/PreStormCore.FSharp/obj
+/PreStormCore.FSharp/bin/Debug
+/PreStormCore.CSharp/bin/Release
+/PreStormCore.FSharp/bin/Release

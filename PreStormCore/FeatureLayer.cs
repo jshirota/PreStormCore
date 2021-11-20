@@ -44,7 +44,7 @@ public class Layer<T> : ILayer<T> where T : Feature
     /// <param name="tokenUrl">Generate token url (defaults to ArcGIS Online).</param>
     public Layer(string url, string user, string password, string tokenUrl = "https://www.arcgis.com/sharing/rest/generateToken")
     {
-        this.token = new Token(tokenUrl, user, password);
+        this.token = string.IsNullOrEmpty(user) || string.IsNullOrEmpty(password) ? null : new Token(tokenUrl, user, password);
         Url = url;
         LayerInfo = Esri.GetLayer(url, Token).Result;
     }
@@ -179,7 +179,8 @@ public class FeatureLayer<T> : Layer<T>, IFeatureLayer<T> where T : Feature
     /// <param name="user">User name.</param>
     /// <param name="password">Password.</param>
     /// <param name="tokenUrl">Generate token url (defaults to ArcGIS Online).</param>
-    public FeatureLayer(string url, string user, string password, string tokenUrl = "https://www.arcgis.com/sharing/rest/generateToken") : base(url, user, password, tokenUrl)
+    public FeatureLayer(string url, string user, string password, string? tokenUrl = null)
+        : base(url, user, password, tokenUrl ?? "https://www.arcgis.com/sharing/rest/generateToken")
     {
     }
 }

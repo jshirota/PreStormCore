@@ -2,10 +2,12 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
-		<LangVersion>8.0</LangVersion>
+		<LangVersion>10.0</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<BuildOutputTargetFolder>analyzers</BuildOutputTargetFolder>
-		<Version>2.1.9</Version>
+		<Version>2.2.0</Version>
 		<Authors>Jiro Shirota</Authors>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 	</PropertyGroup>
@@ -21,6 +23,18 @@
 		<None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/netstandard2.0" Visible="false" />
 		<None Include="$(PkgNewtonsoft_Json)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/netstandard2.0" Visible="false" />
 		<None Include="$(PkgSystem_Security_Permissions)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/netstandard2.0" Visible="false" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="bin\**" />
+		<EmbeddedResource Remove="bin\**" />
+		<None Remove="bin\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Include="..\PreStormCore.CSharp\GeneratorBase.cs">
+			<Link>GeneratorBase.cs</Link>
+		</Compile>
 	</ItemGroup>
 
 </Project>
