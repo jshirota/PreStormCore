@@ -14,7 +14,8 @@ internal static class Http
 #pragma warning disable SYSLIB0014 // Type or member is obsolete
             var request = WebRequest.Create(url);
 #pragma warning restore SYSLIB0014 // Type or member is obsolete
-            return request.GetResponseAs<T>();
+
+            return await request.GetResponseAsAsync<T>();
         }
         catch
         {
@@ -28,13 +29,12 @@ internal static class Http
         }
     }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
     public static async Task<T> Post<T>(string url, string data)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
     {
 #pragma warning disable SYSLIB0014 // Type or member is obsolete
         var request = WebRequest.Create(url);
 #pragma warning restore SYSLIB0014 // Type or member is obsolete
+
         request.Method = "POST";
         request.ContentType = "application/x-www-form-urlencoded";
 
@@ -43,14 +43,18 @@ internal static class Http
         using var stream = request.GetRequestStream();
         stream.Write(bytes, 0, bytes.Length);
 
-        return request.GetResponseAs<T>();
+        return await request.GetResponseAsAsync<T>();
     }
 
-    private static T GetResponseAs<T>(this WebRequest request)
+    private static async Task<T> GetResponseAsAsync<T>(this WebRequest request)
     {
+        ((HttpWebRequest)request).AutomaticDecompression = DecompressionMethods.GZip;
+
         using var stream = request.GetResponse().GetResponseStream();
         using StreamReader reader = new(stream, Encoding.UTF8);
-        var json = reader.ReadToEnd();
+
+        var json = await reader.ReadToEndAsync();
+
         return json.Deserialize<T>()!;
     }
 }
