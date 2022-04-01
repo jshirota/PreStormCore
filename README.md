@@ -6,5 +6,3 @@
 - Nullable reference type support
 - Optional domain to enum mapping
 - Tooling support via Source Generator
-
-![Demo](demo1.png)
