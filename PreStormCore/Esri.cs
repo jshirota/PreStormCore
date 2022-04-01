@@ -8,7 +8,7 @@ internal static class Esri
 {
     public static readonly DateTime BaseTime = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-    private static async Task<T> GetResponse<T>(string url, string? data, string? token = null) where T : IResponse
+    private static async Task<T> GetResponseAsync<T>(string url, string? data, string? token = null) where T : IResponse
     {
         var parameters = new Dictionary<string, object?> { { "token", token }, { "f", "json" } };
         var queryString = string.Join("&", parameters.Where(p => p.Value is not null).Select(p => $"{p.Key}={WebUtility.UrlEncode(p.Value!.ToString())}"));
@@ -16,8 +16,8 @@ internal static class Esri
         try
         {
             var response = data is null
-                ? await Http.Get<T>(url + "?" + queryString)
-                : await Http.Post<T>(url, data + "&" + queryString);
+                ? await Http.GetAsync<T>(url + "?" + queryString)
+                : await Http.PostAsync<T>(url, data + "&" + queryString);
 
             if (response.error is not null)
                 throw new InvalidOperationException(JsonSerializer.Serialize(response.error));
@@ -60,19 +60,19 @@ internal static class Esri
 
     public static async Task<LayerInfo> GetLayer(string url, string? token)
     {
-        return await GetResponse<LayerInfo>(url, null, token);
+        return await GetResponseAsync<LayerInfo>(url, null, token);
     }
 
     public static async Task<FeatureSet> GetFeatureSet(string url, string? token, bool returnGeometry, bool returnZ, string? whereClause, string? extraParameters, IEnumerable<int>? objectIds)
     {
         var data = $"where={CleanWhereClause(whereClause)}{CleanExtraParameters(extraParameters)}&objectIds={CleanObjectIds(objectIds)}&returnGeometry={(returnGeometry ? "true" : "false")}&returnZ={(returnZ ? "true" : "false")}&outFields=*";
-        return await GetResponse<FeatureSet>($"{url}/query", data, token);
+        return await GetResponseAsync<FeatureSet>($"{url}/query", data, token);
     }
 
     public static async Task<OIDSet> GetOIDSet(string url, string? token, string? whereClause, string? extraParameters)
     {
         var data = $"where={CleanWhereClause(whereClause)}{CleanExtraParameters(extraParameters)}&returnIdsOnly=true";
-        return await GetResponse<OIDSet>($"{url}/query", data, token);
+        return await GetResponseAsync<OIDSet>($"{url}/query", data, token);
     }
 
     public static bool IsArcGISOnline(string url)
@@ -83,7 +83,7 @@ internal static class Esri
     public static async Task<TokenInfo> GetTokenInfo(string tokenUrl, string username, string password, int expiration)
     {
         var data = $"username={WebUtility.UrlEncode(username)}&password={WebUtility.UrlEncode(password)}&clientid=requestip&expiration={expiration}";
-        return await GetResponse<TokenInfo>(tokenUrl, data);
+        return await GetResponseAsync<TokenInfo>(tokenUrl, data);
     }
 
     public static async Task<EditResultSet> ApplyEdits(string url, string? token, object? adds = null, object? updates = null, object? deletes = null)
@@ -92,13 +92,13 @@ internal static class Esri
             .Where(x => x.data is not null);
 
         var data = string.Join("&", ops.Select(x => $"{x.op}={WebUtility.UrlEncode(x.data!.Serialize())}"));
-        return await GetResponse<EditResultSet>($"{url}/applyEdits", data, token);
+        return await GetResponseAsync<EditResultSet>($"{url}/applyEdits", data, token);
     }
 
     public static async Task<EditResultSet> Delete(string url, string? token, string whereClause)
     {
         var data = $"where={WebUtility.UrlEncode(whereClause)}";
-        return await GetResponse<EditResultSet>($"{url}/deleteFeatures", data, token);
+        return await GetResponseAsync<EditResultSet>($"{url}/deleteFeatures", data, token);
     }
 
     private static object? RemoveNullZ(object? obj)
@@ -171,7 +171,7 @@ public enum SpatialRel
 
 public record LayerInfo(int id, string name, string type, GeometryType? geometryType, Field[] fields, bool hasZ, int? maxRecordCount, object? error) : IResponse;
 public record Field(string name, string? alias, FieldType? type, bool? nullable, bool? editable, int? length);
-public record Result(int? objectId, bool success, object? error);
+public record Result(int objectId, bool success, object? error);
 public record EditResultSet(Result[] addResults, Result[] updateResults, Result[] deleteResults, object? error) : IResponse;
 
 internal interface IResponse { object? error { get; } }
