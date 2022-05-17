@@ -131,7 +131,7 @@ public abstract class GeneratorBase
 
             foreach (var (f, n) in domains)
             {
-                yield return ($"{Namespace}.{n}", GetNamespace(), GetEnum(f, n));
+                yield return ($"{Namespace}.{n}", GetNamespace(), GetEnum(f, n, domain == "code"));
             }
         }
 
@@ -153,7 +153,7 @@ public abstract class GeneratorBase
     protected abstract string GetNamespace();
     protected abstract string GetService(string @interface, List<(string @class, string property, int id)> types);
     protected abstract string GetClass(string @class, string? geometryType, Field[] fields, bool useDomain);
-    protected abstract string GetEnum(Field field, string @enum);
+    protected abstract string GetEnum(Field field, string @enum, bool useCode);
 }
 
 internal static class Helpers

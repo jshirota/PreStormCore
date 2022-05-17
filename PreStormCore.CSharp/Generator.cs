@@ -81,7 +81,7 @@ public class Generator : GeneratorBase
         return builder.ToString();
     }
 
-    protected override string GetEnum(Field field, string @enum)
+    protected override string GetEnum(Field field, string @enum, bool useCode)
     {
         var reserved = new List<string> { @enum };
 
@@ -89,7 +89,7 @@ public class Generator : GeneratorBase
 {{
     {string.Join(",\r\n\r\n    ", field.domain.codedValues.Select(y =>
         {
-            var entry = (field.domain.name == "code" ? y.code.ToString() : @enum).ToSafeName(false, false, reserved);
+            var entry = (useCode ? y.code.ToString() : y.name).ToSafeName(false, false, reserved);
             reserved.Add(entry);
             return $@"[PreStormCore.Domain({(field.type == "esriFieldTypeString" ? $@"""{y.code.ToString().Replace(@"""", @"\""")}""" : $"{y.code}")}, ""{@enum.Replace(@"""", @"\""")}"")]
     {entry}";
