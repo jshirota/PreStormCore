@@ -10,37 +10,31 @@ internal class PredicateVisitor : ExpressionVisitor
 
     private PredicateVisitor() { }
 
-    private static Dictionary<object, object?> _(object key, object? value) => new() { { key, value } };
-
     protected override Expression VisitBinary(BinaryExpression node)
     {
         var flipped = node.Left is ConstantExpression || node.Left is MemberExpression m && m.Member is FieldInfo;
 
         var (left, right) = (Eval(node.Left), Eval(node.Right));
 
-        var s = (node.NodeType, flipped) switch
+        expressions.Add((node.NodeType, flipped) switch
         {
             (ExpressionType.AndAlso, _) => $"({left} AND {right})",
             (ExpressionType.OrElse, _) => $"({left} OR {right})",
+            (ExpressionType.Equal, _) => $"({left} = {right})",
+            (ExpressionType.NotEqual, _) => $"({left} <> {right})",
 
-            (ExpressionType.Equal, false) => $"({left} = {right})",
-            (ExpressionType.NotEqual, false) => $"({left} <> {right})",
             (ExpressionType.GreaterThan, false) => $"({left} > {right})",
             (ExpressionType.GreaterThanOrEqual, false) => $"({left} >= {right})",
             (ExpressionType.LessThan, false) => $"({left} < {right})",
             (ExpressionType.LessThanOrEqual, false) => $"({left} <= {right})",
 
-            (ExpressionType.Equal, true) => $"({right} AND {left})",
-            (ExpressionType.NotEqual, true) => $"({right} OR {left})",
             (ExpressionType.GreaterThan, true) => $"({right} < {left})",
             (ExpressionType.GreaterThanOrEqual, true) => $"({right} <= {left})",
             (ExpressionType.LessThan, true) => $"({right} > {left})",
             (ExpressionType.LessThanOrEqual, true) => $"({right} >= {left})",
 
             _ => throw new InvalidOperationException($"'{node.NodeType}' is not supported.")
-        };
-
-        expressions.Add(s);
+        });
 
         return base.VisitBinary(node);
     }
@@ -72,7 +66,7 @@ internal class PredicateVisitor : ExpressionVisitor
             "StartsWith" => $"({Eval(node.Object!)} LIKE {Regex.Replace(Eval(node.Arguments[0]), "'$", "%'")})",
 
             _ => throw new InvalidOperationException($"'{method}' is not supported.")
-        }); ;
+        });
 
         return base.VisitMethodCall(node);
     }
