@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using PreStormCore.CodeGeneration;
+using System.Net;
 using System.Text;
 
 namespace PreStormCore.CSharp;
@@ -39,12 +40,16 @@ public class Generator : GeneratorBase
 }}";
     }
 
-    protected override string GetClass(string @class, string? geometryType, Field[] fields, bool useDomain)
+    protected override string GetClass(string @class, string layerName, string? description, string? geometryType, Field[] fields, bool useDomain)
     {
         var reserved = new List<string> { @class };
 
         var builder = new StringBuilder();
 
+        builder.AppendLine($"/// <summary>");
+        builder.AppendLine($"/// <para>{layerName}</para>");
+        builder.AppendLine($"/// <para>{WebUtility.HtmlEncode(description?.Trim())}</para>");
+        builder.AppendLine($"/// </summary>");
         builder.AppendLine($"public class {@class} : PreStormCore.Feature{(geometryType is null ? "" : $"<PreStormCore.{geometryType}>")}");
         builder.Append('{');
 
@@ -72,6 +77,14 @@ public class Generator : GeneratorBase
             reserved.Add(propertyName);
 
             builder.AppendLine();
+            builder.AppendLine($"    /// <summary>");
+            builder.AppendLine($"    /// <para>Field: {field.name}</para>");
+            builder.AppendLine($"    /// <para>Alias: {field.alias}</para>");
+
+            if (field.domain is not null)
+                builder.AppendLine($"    /// <para>Domain: {field.domain.name}</para>");
+
+            builder.AppendLine($"    /// </summary>");
             builder.AppendLine($"    [PreStormCore.Mapped(\"{field.name}\"){(field.nullable == false ? ", System.ComponentModel.DataAnnotations.Required" : "")}]");
             builder.AppendLine($"    public virtual {csType}{(field.nullable == false ? "" : "?")} {propertyName} {{ get;{(field.editable == true ? "" : " protected")} set; }} = default!;");
         }

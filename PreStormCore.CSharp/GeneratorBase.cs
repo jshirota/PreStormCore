@@ -114,7 +114,7 @@ public abstract class GeneratorBase
                 .Where(x => !fieldsToExclude.Contains(x.name))
                 .ToArray();
 
-            yield return ($"{Namespace}.{@class}", GetNamespace(), GetClass(@class, geometryType, fields, useDomain));
+            yield return ($"{Namespace}.{@class}", GetNamespace(), GetClass(@class, layer.name, layer.description, geometryType, fields, useDomain));
         }
 
         if (useDomain)
@@ -152,7 +152,7 @@ public abstract class GeneratorBase
 
     protected abstract string GetNamespace();
     protected abstract string GetService(string @interface, List<(string @class, string property, int id)> types);
-    protected abstract string GetClass(string @class, string? geometryType, Field[] fields, bool useDomain);
+    protected abstract string GetClass(string @class, string layerName, string? description, string? geometryType, Field[] fields, bool useDomain);
     protected abstract string GetEnum(Field field, string @enum, bool useCode);
 }
 
@@ -230,6 +230,7 @@ public class Layer
     public Layer parentLayer { get; set; } = default!;
     public string name { get; set; } = default!;
     public string type { get; set; } = default!;
+    public string? description { get; set; } = default!;
     public string? geometryType { get; set; }
     public Field[] fields { get; set; } = default!;
     public string capabilities { get; set; } = default!;
@@ -270,7 +271,7 @@ public class SourceGenerator<T> : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var additionalTexts = context.AdditionalTextsProvider
-            .Where(x => x.Path.EndsWith("prestorm.json"))
+            .Where(x => x.Path.EndsWith(".json"))
             .Select((x, y) => x.GetText(y)?.ToString());
 
         context.RegisterSourceOutput(additionalTexts, (source, json) =>
@@ -278,12 +279,18 @@ public class SourceGenerator<T> : IIncrementalGenerator
             if (string.IsNullOrWhiteSpace(json))
                 return;
 
-            var services = JsonConvert.DeserializeAnonymousType(json!, new { services = Array.Empty<Service>() })!.services;
-
-            foreach (var s in services)
+            try
             {
-                foreach (var (name, @namespace, code) in cache.GetOrAdd(s, x => new T { Service = s }.Generate().ToArray()))
-                    source.AddSource($"{Guid.NewGuid()}", SourceText.From($"{@namespace}\r\n\r\n{code}", Encoding.UTF8));
+                var services = JsonConvert.DeserializeAnonymousType(json!, new { services = Array.Empty<Service>() })!.services;
+
+                foreach (var s in services)
+                {
+                    foreach (var (name, @namespace, code) in cache.GetOrAdd(s, x => new T { Service = s }.Generate().ToArray()))
+                        source.AddSource($"{Guid.NewGuid()}", SourceText.From($"{@namespace}\r\n\r\n{code}", Encoding.UTF8));
+                }
+            }
+            catch
+            {
             }
         });
     }
