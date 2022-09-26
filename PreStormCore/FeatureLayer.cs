@@ -106,7 +106,7 @@ public class Layer<T> : ILayer<T> where T : Feature
     }
 
     public IEnumerable<T> Download(Expression<Func<T, bool>> predicate, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null)
-        => Download(PredicateVisitor.Eval(predicate), extraParameters, keepQuerying, degreeOfParallelism, cancellationToken);
+        => Download(predicate.ToWhereClause(), extraParameters, keepQuerying, degreeOfParallelism, cancellationToken);
 
     public IEnumerable<T> Download(GeometryBase? geometry, SpatialRel spatialRel, string? whereClause = null, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null)
     {
@@ -118,7 +118,7 @@ public class Layer<T> : ILayer<T> where T : Feature
     }
 
     public IEnumerable<T> Download(GeometryBase? geometry, SpatialRel spatialRel, Expression<Func<T, bool>> predicate, string? extraParameters = null, bool keepQuerying = false, int degreeOfParallelism = 1, CancellationToken? cancellationToken = null)
-        => Download(geometry, spatialRel, PredicateVisitor.Eval(predicate), extraParameters, keepQuerying, degreeOfParallelism);
+        => Download(geometry, spatialRel, predicate.ToWhereClause(), extraParameters, keepQuerying, degreeOfParallelism);
 
     private IEnumerable<T> Download(IEnumerable<int> objectIds, string? whereClause, string? extraParameters, int batchSize, int degreeOfParallelism, CancellationToken? cancellationToken)
     {
@@ -173,7 +173,7 @@ public class Layer<T> : ILayer<T> where T : Feature
     }
 
     public IAsyncEnumerable<T> DownloadAsync(Expression<Func<T, bool>> predicate, string? extraParameters = null, bool keepQuerying = false, CancellationToken? cancellationToken = null)
-        => DownloadAsync(PredicateVisitor.Eval(predicate), extraParameters, keepQuerying, cancellationToken);
+        => DownloadAsync(predicate.ToWhereClause(), extraParameters, keepQuerying, cancellationToken);
 
     public async IAsyncEnumerable<T> DownloadAsync(GeometryBase? geometry, SpatialRel spatialRel, string? whereClause = null, string? extraParameters = null, bool keepQuerying = false, CancellationToken? cancellationToken = null)
     {
@@ -186,7 +186,7 @@ public class Layer<T> : ILayer<T> where T : Feature
     }
 
     public IAsyncEnumerable<T> DownloadAsync(GeometryBase? geometry, SpatialRel spatialRel, Expression<Func<T, bool>> predicate, string? extraParameters = null, bool keepQuerying = false, CancellationToken? cancellationToken = null)
-        => DownloadAsync(geometry, spatialRel, PredicateVisitor.Eval(predicate), extraParameters, keepQuerying, cancellationToken);
+        => DownloadAsync(geometry, spatialRel, predicate.ToWhereClause(), extraParameters, keepQuerying, cancellationToken);
 
     private async IAsyncEnumerable<T> DownloadAsync(IEnumerable<int> objectIds, string? whereClause, string? extraParameters, int batchSize, CancellationToken? cancellationToken)
     {
