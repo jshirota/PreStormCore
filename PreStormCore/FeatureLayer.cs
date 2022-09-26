@@ -128,14 +128,21 @@ public class Layer<T> : ILayer<T> where T : Feature
 
         var returnGeometry = typeof(T).HasGeometry();
 
-        return objectIds
+        var features = objectIds
             .Chunk(batchSize)
             .AsParallel()
             .AsOrdered()
             .WithDegreeOfParallelism(degreeOfParallelism < 1 ? 1 : degreeOfParallelism)
-            .WithCancellation(cancellationToken ?? CancellationToken.None)
             .SelectMany(ids => Esri.GetFeatureSet(Url, Token, returnGeometry, layerInfo.hasZ, whereClause, extraParameters, ids).Result.features
                 .Select(g => g.ToFeature<T>(layerInfo)));
+
+        foreach (var feature in features)
+        {
+            if (cancellationToken?.IsCancellationRequested == true)
+                yield break;
+
+            yield return feature;
+        }
     }
 
     public async IAsyncEnumerable<T> DownloadAsync(params int[] objectIds)
