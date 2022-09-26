@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="PreStormCore" Version="2.2.14" />
+    <PackageReference Include="PreStormCore" Version="2.2.16" />
     <PackageReference Include="PreStormCore.CSharp" Version="2.2.12" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
