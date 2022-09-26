@@ -12,7 +12,7 @@ public static class ExpressionExt
         return PredicateVisitor.Eval(expression);
     }
 
-    internal static string? GetValue(this object? obj)
+    private static string? GetValue(this object? obj)
     {
         return obj switch
         {
